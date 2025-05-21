@@ -1,38 +1,26 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ChevronDown, ChevronUp, Scroll, Send, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { submitAction } from '@/modules/actions'
+import { useDaimStore } from '@/modules/lore/lore.store'
+import Lore from './Lore'
 
 export default function DungeonMaster() {
+  const lore = useDaimStore((state) => state.lore);
   const [gameText, setGameText] = useState<string[]>([
     "Welcome, brave adventurer, to the mystical land of Eldoria. You find yourself standing at the edge of a dense forest. The air is thick with the scent of pine and something... magical. A narrow path winds its way into the trees, and you can hear the faint sound of rushing water in the distance. What do you do?",
   ])
   const [userAction, setUserAction] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [loreOpen, setLoreOpen] = useState(false)
-  const [lore, setLore] = useState(`# World of Eldoria
+  const [loreOpen, setLoreOpen] = useState(false);
 
-## Regions
-- The Whispering Woods: A dense forest with ancient magic
-- The Crystalline Mountains: Home to dwarves and precious gems
-- The Sunken City: An underwater ruin filled with treasures and dangers
-
-## Characters
-- The Oracle of Mist: A mysterious seer who speaks in riddles
-- King Thorne: The ruler of the human kingdom, rumored to be corrupted
-- The Emerald Dragon: An ancient being who guards the realm
-
-## Current Quest
-You are searching for the lost Amulet of Ages, said to grant its wearer control over time itself.`)
 
   const handleSubmitAction = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,7 +32,7 @@ You are searching for the lost Amulet of Ages, said to grant its wearer control 
     setUserAction("")
 
     try {
-      const response = await submitAction(userAction, lore);
+      const response = await submitAction(userAction, lore.map(({ content }) => content).join('\n'));
       let newText = "";
       for await (const line of response) {
         newText += line;
@@ -57,10 +45,6 @@ You are searching for the lost Amulet of Ages, said to grant its wearer control 
     }
   }
 
-  const updateLore = (newLore: string) => {
-    setLore(newLore)
-  }
-
   return (
     <main className="flex min-h-screen flex-col bg-gray-900 text-gray-100">
       <div className="container mx-auto px-4 py-8 flex flex-col h-screen max-w-4xl">
@@ -70,35 +54,8 @@ You are searching for the lost Amulet of Ages, said to grant its wearer control 
         </header>
 
         <div className="flex flex-col md:flex-row gap-4 flex-1 overflow-hidden">
-          {/* Lore Panel (Collapsible on mobile, sidebar on desktop) */}
-          <div className="md:hidden w-full mb-4">
-            <Collapsible open={loreOpen} onOpenChange={setLoreOpen} className="w-full">
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-between border-amber-700/50 bg-gray-800/50"
-                >
-                  <div className="flex items-center">
-                    <Scroll className="mr-2 h-4 w-4 text-amber-500" />
-                    <span>Game Lore</span>
-                  </div>
-                  {loreOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">
-                <LoreEditor lore={lore} updateLore={updateLore} />
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-
           {/* Desktop Lore Panel */}
-          <div className="hidden md:block w-1/3 bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden">
-            <div className="p-3 bg-gray-800 border-b border-gray-700 flex items-center">
-              <Scroll className="mr-2 h-4 w-4 text-amber-500" />
-              <h2 className="font-semibold">Game Lore</h2>
-            </div>
-            <LoreEditor lore={lore} updateLore={updateLore} />
-          </div>
+          <Lore />
 
           {/* Game Display */}
           <div className="flex-1 flex flex-col bg-gray-800/30 rounded-lg border border-gray-700 overflow-hidden">
@@ -159,21 +116,5 @@ You are searching for the lost Amulet of Ages, said to grant its wearer control 
         </div>
       </div>
     </main>
-  )
-}
-
-interface LoreEditorProps {
-  lore: string
-  updateLore: (newLore: string) => void
-}
-
-function LoreEditor({ lore, updateLore }: LoreEditorProps) {
-  return (
-    <Textarea
-      value={lore}
-      onChange={(e) => updateLore(e.target.value)}
-      className="w-full h-full min-h-[300px] p-3 bg-gray-800/30 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none text-gray-200"
-      placeholder="Edit your game lore here..."
-    />
   )
 }
