@@ -6,10 +6,8 @@ import { useDaimStore } from '@/modules/lore/lore.store';
 export default function Lore() {
   const { lore, setLore } = useDaimStore();
 
-
   return <div className="hidden md:block w-1/3 bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden">
     <div className="p-3 bg-gray-800 border-b border-gray-700 flex items-center">
-      <ScrollArea className="mr-2 h-4 w-4 text-amber-500" />
       <h2 className="font-semibold">Game Lore</h2>
     </div>
 

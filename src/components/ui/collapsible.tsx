@@ -1,33 +1,53 @@
-"use client"
+import { cn } from '@/lib/utils';
+import { useEffect, useRef, useState } from 'react';
 
-import * as CollapsiblePrimitive from "@radix-ui/react-collapsible"
-
-function Collapsible({
-  ...props
-}: React.ComponentProps<typeof CollapsiblePrimitive.Root>) {
-  return <CollapsiblePrimitive.Root data-slot="collapsible" {...props} />
+export function Collapsible({
+  open,
+  onOpenChange,
+  className,
+  children,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  className?: string
+  children: React.ReactNode
+}) {
+  return <div className={cn('w-full', className)}>{children}</div>;
 }
 
-function CollapsibleTrigger({
-  ...props
-}: React.ComponentProps<typeof CollapsiblePrimitive.CollapsibleTrigger>) {
+export function CollapsibleTrigger({
+  asChild,
+  children,
+}: {
+  asChild: boolean
+  children: React.ReactNode
+}) {
+  return <>{children}</>;
+}
+
+export function CollapsibleContent({
+  className,
+  children,
+}: {
+  className?: string
+  children: React.ReactNode
+}) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setHeight(contentRef.current.scrollHeight)
+    }
+  }, []);
+
   return (
-    <CollapsiblePrimitive.CollapsibleTrigger
-      data-slot="collapsible-trigger"
-      {...props}
-    />
-  )
+    <div
+      ref={contentRef}
+      style={{ maxHeight: height }}
+      className={cn('overflow-hidden transition-all duration-300', className)}
+    >
+      {children}
+    </div>
+  );
 }
-
-function CollapsibleContent({
-  ...props
-}: React.ComponentProps<typeof CollapsiblePrimitive.CollapsibleContent>) {
-  return (
-    <CollapsiblePrimitive.CollapsibleContent
-      data-slot="collapsible-content"
-      {...props}
-    />
-  )
-}
-
-export { Collapsible, CollapsibleTrigger, CollapsibleContent }
