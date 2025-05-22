@@ -1,4 +1,4 @@
-import type { LoreState } from '@/modules/lore/lore.store';
+import type { LoreState } from '@/stores/campaign.store';
 
 const STORE_NAME = 'daim-lore-store';
 

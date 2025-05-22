@@ -1,33 +1,27 @@
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
-import type { Embedding } from '@/modules/lore/lore.embeddings';
-import { useDaimStore } from '@/modules/lore/lore.store';
+'use client';
+
+import { useDaimStore } from '@/stores/campaign.store';
+import { useShallow } from 'zustand/shallow';
 
 export default function Lore() {
-  const { lore, setLore } = useDaimStore();
+  const { lore } = useDaimStore(useShallow((state) => ({
+    texts: state.texts,
+    lore: state.lore,
+    setLore: state.setLore,
+  })));
 
-  return <div className="hidden md:block w-1/3 bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden">
+  return <div className="w-1/3 bg-gray-800/50 rounded-lg border border-gray-700 overflow-scroll">
     <div className="p-3 bg-gray-800 border-b border-gray-700 flex items-center">
       <h2 className="font-semibold">Game Lore</h2>
     </div>
 
     <h3 className="p-3 text-gray-400">Places</h3>
-    {lore.filter(({ type }) => type === 'place').map((place, index) => (
-      <Textarea
-        value={place.content}
-        onChange={(e) => setLore(e.target.value, 'place', place.embedding)}
-        className="w-full h-full min-h-[300px] p-3 bg-gray-800/30 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none text-gray-200"
-        placeholder="Edit your game lore here..."
-      />
+    {lore.filter(({ type }) => type === 'location').map((place, index) => (
+      <div key={index} className='p-4'>{place.content}</div>
     ))}
     <h3 className="p-3 text-gray-400">Characters</h3>
     {lore.filter(({ type }) => type === 'character').map((character, index) => (
-      <Textarea
-        value={character.content}
-        onChange={(e) => setLore(e.target.value, 'character', character.embedding)}
-        className="w-full h-full min-h-[300px] p-3 bg-gray-800/30 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none text-gray-200"
-        placeholder="Edit your game lore here..."
-      />
+      <div key={index} className='p-4'>{character.content}</div>
     ))}
   </div>;
 }

@@ -1,8 +1,8 @@
 import { embed } from 'ai';
 import { ollama } from 'ollama-ai-provider';
-import type { LoreFact } from './lore.store';
 
 export type Embedding = number[];
+export type WithEmbedding<T> = T & { embedding: Embedding };
 
 const embeddingModel = ollama.embedding('nomic-embed-text');
 const RelevanceThreshold = 0.5;
@@ -18,8 +18,7 @@ function cosineDistance(a: Embedding, b: Embedding) {
   }
   aMagnitude = Math.sqrt(aMagnitude);
   bMagnitude = Math.sqrt(bMagnitude);
-  const cosineSimilarity = dotProduct / (aMagnitude * bMagnitude);
-  return 1 - cosineSimilarity;
+  return dotProduct / (aMagnitude * bMagnitude);
 }
 
 export const generateEmbedding = async (
@@ -32,11 +31,10 @@ export const generateEmbedding = async (
   return embedding;
 };
 
-export const filterRelevantContent = async (userQuery: string) => {
-  const userQueryEmbedded = await generateEmbedding(userQuery);
-
-  return (lore: LoreFact) => {
-    const similarity = cosineDistance(lore.embedding, userQueryEmbedded);
-    return similarity < RelevanceThreshold;
+export async function filterRelevantContent<X extends { content: string; embedding: Embedding }>(userQuery: string) {
+  const userQueryEmbedding = await generateEmbedding(userQuery);
+  return (content: X) => {
+    const similarity = cosineDistance(content.embedding, userQueryEmbedding);
+    return similarity > RelevanceThreshold;
   };
 };

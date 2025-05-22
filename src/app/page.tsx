@@ -6,16 +6,21 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { submitAction } from '@/modules/actions';
-import { useDaimStore } from '@/modules/lore/lore.store';
+import { useDaimStore } from '@/stores/campaign.store';
 import Lore from './Lore';
 import { SendIcon } from '@/components/icons/SendIcon';
 import { SparklesIcon } from '@/components/icons/SparklesIcon';
+import { useShallow } from 'zustand/shallow';
+import { enrichLore } from '@/modules/lore/lore.actions';
 
 export default function DungeonMaster() {
-  const lore = useDaimStore((state) => state.lore);
-  const [gameText, setGameText] = useState<string[]>([
-    'Welcome, brave adventurer, to the mystical land of Eldoria. You find yourself standing at the edge of a dense forest. The air is thick with the scent of pine and something... magical. A narrow path winds its way into the trees, and you can hear the faint sound of rushing water in the distance. What do you do?',
-  ]);
+  const { lore, texts, setTexts, getRelevantLore, setLore } = useDaimStore(useShallow((state) => ({
+    lore: state.lore,
+    texts: state.texts,
+    getRelevantLore: state.getRelevantLore,
+    setLore: state.setLore,
+    setTexts: state.setTexts,
+  })));
   const [userAction, setUserAction] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,21 +29,32 @@ export default function DungeonMaster() {
     if (!userAction.trim() || isLoading) return;
 
     setIsLoading(true);
-    const newGameText = [...gameText, `> ${userAction}`];
-    setGameText(newGameText);
+    const newGameText = [...texts, `> ${userAction}`];
+    setTexts(newGameText);
     setUserAction('');
 
+
+    const lastGameText = texts.slice(-1);
+    const recentGameTexts = texts.slice(-3);
+    let newText = '';
+
     try {
-      const response = await submitAction(userAction, lore.map(({ content }) => content).join('\n'));
-      let newText = '';
+      const releventLore = await getRelevantLore(`${lastGameText.join('\n')}. ${userAction}.`);
+      const response = await submitAction(userAction, releventLore.map(({ content }) => content).join('\n'), recentGameTexts);
       for await (const line of response) {
         newText += line;
-        setGameText([...newGameText, newText]);
+        setTexts([...newGameText, newText]);
       }
     } catch (error) {
-      setGameText([...newGameText, 'Something went wrong with the AI. Please try again.']);
+      setTexts([...newGameText, 'Something went wrong with the AI. Please try again.']);
     } finally {
       setIsLoading(false);
+      const currentLore = lore.map(({ content }) => content).join('\n');
+      enrichLore(currentLore, [...lastGameText, newText]).then((newLore) => {
+        if (newLore) {
+          setLore(newLore);
+        }
+      });
     }
   }
 
@@ -58,7 +74,7 @@ export default function DungeonMaster() {
           <div className='flex-1 flex flex-col bg-gray-800/30 rounded-lg border border-gray-700 overflow-hidden'>
             <ScrollArea className='flex-1 p-4'>
               <div className='space-y-4'>
-                {gameText.map((text, index) => (
+                {texts.map((text, index) => (
                   <div
                     key={index}
                     className={cn(
