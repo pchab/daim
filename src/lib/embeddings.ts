@@ -31,7 +31,7 @@ export const generateEmbedding = async (
   return embedding;
 };
 
-export async function filterRelevantContent<X extends { content: string; embedding: Embedding }>(userQuery: string) {
+export async function filterRelevantContent<X extends { embedding: Embedding }>(userQuery: string) {
   const userQueryEmbedding = await generateEmbedding(userQuery);
   return (content: X) => {
     const similarity = cosineDistance(content.embedding, userQueryEmbedding);

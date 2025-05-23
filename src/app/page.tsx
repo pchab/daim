@@ -14,12 +14,18 @@ import { useShallow } from 'zustand/shallow';
 import { enrichLore } from '@/modules/lore/lore.actions';
 
 export default function DungeonMaster() {
-  const { lore, texts, setTexts, getRelevantLore, setLore } = useDaimStore(useShallow((state) => ({
-    lore: state.lore,
+  const {
+    texts,
+    lore,
+    setTexts,
+    tagRelevantLore,
+    changeShouldUpdateLore,
+  } = useDaimStore(useShallow((state) => ({
     texts: state.texts,
-    getRelevantLore: state.getRelevantLore,
-    setLore: state.setLore,
+    lore: state.lore,
+    tagRelevantLore: state.tagRelevantLore,
     setTexts: state.setTexts,
+    changeShouldUpdateLore: state.changeShouldUpdateLore,
   })));
   const [userAction, setUserAction] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -39,22 +45,18 @@ export default function DungeonMaster() {
     let newText = '';
 
     try {
-      const releventLore = await getRelevantLore(`${lastGameText.join('\n')}. ${userAction}.`);
+      await tagRelevantLore(`${lastGameText.join('\n')}. ${userAction}.`);
+      const releventLore = lore.filter(({ relevant }) => relevant);
       const response = await submitAction(userAction, releventLore.map(({ content }) => content).join('\n'), recentGameTexts);
       for await (const line of response) {
         newText += line;
         setTexts([...newGameText, newText]);
       }
+      changeShouldUpdateLore(true);
     } catch (error) {
       setTexts([...newGameText, 'Something went wrong with the AI. Please try again.']);
     } finally {
       setIsLoading(false);
-      const currentLore = lore.map(({ content }) => content).join('\n');
-      enrichLore(currentLore, [...lastGameText, newText]).then((newLore) => {
-        if (newLore) {
-          setLore(newLore);
-        }
-      });
     }
   }
 
